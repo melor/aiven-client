@@ -617,6 +617,25 @@ class AivenCLI(argx.CommandLineTool):
     @arg.project
     @arg.service_name
     @arg.topic
+    @arg("--format", help="Format string for output, e.g. '{name} {retention_hours}'")
+    @arg.json
+    @arg.verbose
+    def service_topic_get(self):
+        """Get Kafka service topic"""
+        topic = self.client.get_service_topic(project=self.get_project(), service=self.args.name,
+                                              topic=self.args.topic)
+        layout = [["partition", "isr", "size", "earliest_offset", "latest_offset", "groups"]]
+        for p in topic["partitions"]:
+            p["groups"] = len(p["consumer_groups"])
+
+        if self.args.verbose:
+            layout.append("consumer_groups")
+
+        self.print_response(topic["partitions"], format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
+    @arg.service_name
+    @arg.topic
     @arg.partitions
     @arg.replication
     @arg.retention
@@ -628,7 +647,7 @@ class AivenCLI(argx.CommandLineTool):
                                                     partitions=self.args.partitions,
                                                     replication=self.args.replication,
                                                     retention_hours=self.args.retention)
-        print(response["message"])
+        print(response)
 
     @arg.project
     @arg.service_name
