@@ -551,8 +551,45 @@ class AivenCLI(argx.CommandLineTool):
                                                 username=self.args.username)
 
     @arg.project
+    @arg("-c", "--user-config", help="User config", required=True)
+    @arg("-d", "--endpoint-name", help="Integration endpoint name", required=True)
+    @arg("-t", "--endpoint-type", help="Integration endpoint type", required=True)
+    @arg.json
+    def service_integration_endpoint_create(self):
+        """Create a service integration endpoint"""
+        self.client.create_service_integration_endpoint(
+            project=self.get_project(),
+            endpoint_name=self.args.endpoint_name,
+            endpoint_type=self.args.endpoint_type,
+            user_config={"datadog_api_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+        )
+
+    @arg.project
+    @arg("endpoint-id", help="Service integration endpoint ID")
+    @arg.json
+    def service_integration_endpoint_delete(self):
+        """Delete a service integration endpoint"""
+        self.client.delete_service_integration_endpoint(
+            project=self.get_project(),
+            endpoint_id=getattr(self.args, "endpoint-id"),
+        )
+
+    @arg.project
+    @arg("--format", help="Format string for output, e.g. '{username} {password}'")
+    @arg.verbose
+    @arg.json
+    def service_integration_endpoint_list(self):
+        """List service integration endpoints"""
+        service_integration_endpoints = self.client.get_service_integration_endpoints(project=self.get_project())
+        layout = [["endpoint_id", "endpoint_name", "endpoint_type"]]
+        if self.args.verbose:
+            layout.extend(["user_config"])
+        self.print_response(service_integration_endpoints, format=self.args.format, json=self.args.json, table_layout=layout)
+
+    @arg.project
     @arg("-s", "--source-service", help="Source service name", required=True)
-    @arg("-d", "--dest-service", help="Destination service name", required=True)
+    @arg("-d", "--dest-service", help="Destination service name", required=False)
+    @arg("-e", "--dest-endpoint-id", help="Destination integration endpoint id", required=False)
     @arg("-t", "--integration-type", help="Integration type", required=True)
     @arg.json
     def service_integration_create(self):
@@ -561,6 +598,7 @@ class AivenCLI(argx.CommandLineTool):
             project=self.get_project(),
             source_service=self.args.source_service,
             dest_service=self.args.dest_service,
+            dest_endpoint_id=self.args.dest_endpoint_id,
             integration_type=self.args.integration_type,
         )
 

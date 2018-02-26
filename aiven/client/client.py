@@ -254,12 +254,27 @@ class AivenClient(AivenClientBase):
     def reset_service_user_password(self, project, service, username):
         return self.verify(self.put, "/project/{}/service/{}/user/{}/credentials/reset".format(project, service, username))
 
+    def get_service_integration_endpoints(self, project):
+        return self.verify(self.get, "/project/{}/integration_endpoint".format(project),
+                           result_key="service_integration_endpoints")
+
+    def create_service_integration_endpoint(self, project, endpoint_name, endpoint_type, user_config):
+        return self.verify(self.post, "/project/{}/integration_endpoint".format(project), body={
+            "endpoint_name": endpoint_name,
+            "endpoint_type": endpoint_type,
+            "user_config": user_config,
+        })
+
+    def delete_service_integration_endpoint(self, project, endpoint_id):
+        return self.verify(self.delete, "/project/{}/integration_endpoint/{}".format(project, endpoint_id))
+
     def get_service_integrations(self, project, service):
         return self.verify(self.get, "/project/{}/service/{}/integration".format(project, service),
                            result_key="service_integrations")
 
-    def create_service_integration(self, project, source_service, dest_service, integration_type):
+    def create_service_integration(self, project, source_service, dest_service, integration_type, dest_endpoint_id=None):
         return self.verify(self.post, "/project/{}/service/{}/integration".format(project, source_service), body={
+            "dest_endpoint_id": dest_endpoint_id,
             "dest_service": dest_service,
             "integration_type": integration_type,
         })
