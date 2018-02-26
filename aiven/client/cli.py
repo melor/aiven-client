@@ -24,6 +24,12 @@ except ImportError:
     pass
 
 try:
+    from aiven.support import plugin as supportplugin  # pylint: disable=import-error,no-name-in-module
+    PLUGINS.append(supportplugin)
+except ImportError:
+    raise # pass
+
+try:
     raw_input_func = raw_input  # pylint: disable=undefined-variable
 except NameError:
     # python 3.x
