@@ -258,6 +258,10 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/integration_endpoint".format(project),
                            result_key="service_integration_endpoints")
 
+    def get_service_integration_endpoint_types(self, project):
+        return self.verify(self.get, "/project/{}/integration_endpoint_types".format(project),
+                           result_key="endpoint_types")
+
     def create_service_integration_endpoint(self, project, endpoint_name, endpoint_type, user_config):
         return self.verify(self.post, "/project/{}/integration_endpoint".format(project), body={
             "endpoint_name": endpoint_name,

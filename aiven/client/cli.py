@@ -551,17 +551,25 @@ class AivenCLI(argx.CommandLineTool):
                                                 username=self.args.username)
 
     @arg.project
-    @arg("-c", "--user-config", help="User config", required=True)
     @arg("-d", "--endpoint-name", help="Integration endpoint name", required=True)
     @arg("-t", "--endpoint-type", help="Integration endpoint type", required=True)
+    @arg.user_config
     @arg.json
     def service_integration_endpoint_create(self):
         """Create a service integration endpoint"""
+        if self.args.user_config:
+            project = self.get_project()
+            user_config_schema = self._get_endpoint_user_config_schema(
+                project=project, endpoint_type_name=self.args.endpoint_type)
+            user_config = self.create_user_config(project, user_config_schema, self.args.user_config)
+        else:
+            user_config = {}
+
         self.client.create_service_integration_endpoint(
             project=self.get_project(),
             endpoint_name=self.args.endpoint_name,
             endpoint_type=self.args.endpoint_type,
-            user_config={"datadog_api_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+            user_config=user_config,
         )
 
     @arg.project
@@ -897,19 +905,12 @@ class AivenCLI(argx.CommandLineTool):
             self.client.delete_service(project=self.get_project(), service=name)
             self.log.info("%s: terminated", name)
 
-    def create_user_config(self, project, service_type, config_vars):
+    def create_user_config(self, project, user_config_schema, config_vars):
         """Convert a list of ["foo.bar='baz'"] to {"foo": {"bar": "baz"}}"""
         if not config_vars:
             return {}
 
-        service_types = self.client.get_service_types(project=project)
-        try:
-            service_def = service_types[service_type]
-        except KeyError:
-            raise argx.UserError("Unknown service type {!r}, available options: {}".format(
-                service_type, ", ".join(service_types)))
-
-        options = self.collect_user_config_options(service_def["user_config_schema"])
+        options = self.collect_user_config_options(user_config_schema)
         user_config = {}
         for key_value in self.args.user_config:
             try:
@@ -1048,6 +1049,7 @@ class AivenCLI(argx.CommandLineTool):
             raise argx.UserError("No subscription plan given")
 
         project = self.get_project()
+        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service_type)
         try:
             self.client.create_service(
                 project=project,
@@ -1056,7 +1058,7 @@ class AivenCLI(argx.CommandLineTool):
                 plan=plan,
                 cloud=self.args.cloud,
                 group_name=self.args.group_name,
-                user_config=self.create_user_config(project, self.args.service_type, self.args.user_config))
+                user_config=self.create_user_config(project, user_config_schema, self.args.user_config))
         except client.Error as ex:
             print(ex.response)
             if not self.args.no_fail_if_exists or ex.response.status_code != 409:
@@ -1073,6 +1075,25 @@ class AivenCLI(argx.CommandLineTool):
             return False
         else:
             return None
+
+    def _get_service_type_user_config_schema(self, project, service_type):
+        service_types = self.client.get_service_types(project=project)
+        try:
+            service_def = service_types[service_type]
+        except KeyError:
+            raise argx.UserError("Unknown service type {!r}, available options: {}".format(
+                service_type, ", ".join(service_types)))
+
+        return service_def["user_config_schema"]
+
+    def _get_endpoint_user_config_schema(self, project, endpoint_type_name):
+        endpoint_types_list = self.client.get_service_integration_endpoint_types(project=project)
+        endpoint_types = {item["endpoint_type"]: item for item in endpoint_types_list}
+        try:
+            return endpoint_types[endpoint_type_name]["user_config_schema"]
+        except KeyError:
+            raise argx.UserError("Unknown endpoint type {!r}, available options: {}".format(
+                endpoint_type_name, ", ".join(endpoint_types)))
 
     @arg.project
     @arg.service_name
@@ -1091,7 +1112,8 @@ class AivenCLI(argx.CommandLineTool):
         project = self.get_project()
         service = self.client.get_service(project=project, service=self.args.name)
         plan = self.args.plan or service["plan"]
-        user_config = self.create_user_config(project, service["service_type"], self.args.user_config)
+        user_config_schema = self._get_service_type_user_config_schema(project=project, service_type=service["service_type"])
+        user_config = self.create_user_config(project, user_config_schema, self.args.user_config)
         maintenance = {}
         if self.args.maintenance_dow:
             maintenance["dow"] = self.args.maintenance_dow
