@@ -276,15 +276,19 @@ class AivenClient(AivenClientBase):
         return self.verify(self.get, "/project/{}/service/{}/integration".format(project, service),
                            result_key="service_integrations")
 
-    def create_service_integration(self, project, source_service, dest_service, integration_type, dest_endpoint_id=None):
-        return self.verify(self.post, "/project/{}/service/{}/integration".format(project, source_service), body={
+    def create_service_integration(self, project, integration_type,
+                                   source_service=None, dest_service=None,
+                                   source_endpoint_id=None, dest_endpoint_id=None):
+        return self.verify(self.post, "/project/{}/integration".format(project), body={
+            "source_endpoint_id": source_endpoint_id,
+            "source_service": source_service,
             "dest_endpoint_id": dest_endpoint_id,
             "dest_service": dest_service,
             "integration_type": integration_type,
         })
 
-    def delete_service_integration(self, project, service, integration_id):
-        return self.verify(self.delete, "/project/{}/service/{}/integration/{}".format(project, service, integration_id))
+    def delete_service_integration(self, project, integration_id):
+        return self.verify(self.delete, "/project/{}/integration/{}".format(project, integration_id))
 
     def get_service_topic(self, project, service, topic):
         return self.verify(self.get, "/project/{}/service/{}/topic/{}".format(project, service, topic),

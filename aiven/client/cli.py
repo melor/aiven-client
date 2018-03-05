@@ -595,10 +595,11 @@ class AivenCLI(argx.CommandLineTool):
         self.print_response(service_integration_endpoints, format=self.args.format, json=self.args.json, table_layout=layout)
 
     @arg.project
-    @arg("-s", "--source-service", help="Source service name", required=True)
-    @arg("-d", "--dest-service", help="Destination service name", required=False)
-    @arg("-e", "--dest-endpoint-id", help="Destination integration endpoint id", required=False)
     @arg("-t", "--integration-type", help="Integration type", required=True)
+    @arg("-s", "--source-service", help="Source service name")
+    @arg("-d", "--dest-service", help="Destination service name")
+    @arg("-S", "--source-endpoint-id", help="Source integration endpoint id")
+    @arg("-D", "--dest-endpoint-id", help="Destination integration endpoint id")
     @arg.json
     def service_integration_create(self):
         """Create a service integration"""
@@ -606,19 +607,18 @@ class AivenCLI(argx.CommandLineTool):
             project=self.get_project(),
             source_service=self.args.source_service,
             dest_service=self.args.dest_service,
+            source_endpoint_id=self.args.source_endpoint_id,
             dest_endpoint_id=self.args.dest_endpoint_id,
             integration_type=self.args.integration_type,
         )
 
     @arg.project
-    @arg.service_name
     @arg("integration-id", help="Service integration ID")
     @arg.json
     def service_integration_delete(self):
         """Delete a service integration"""
         self.client.delete_service_integration(
             project=self.get_project(),
-            service=self.args.name,
             integration_id=getattr(self.args, "integration-id"),
         )
 
