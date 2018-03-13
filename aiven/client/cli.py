@@ -630,10 +630,12 @@ class AivenCLI(argx.CommandLineTool):
     def service_integration_list(self):
         """List service integrations"""
         service_integrations = self.client.get_service_integrations(project=self.get_project(), service=self.args.name)
-        for integration in service_integrations:
-            integration["service_integration_id"] = integration["service_integration_id"] or "(integration not enabled)"
+        for item in service_integrations:
+            item["service_integration_id"] = item["service_integration_id"] or "(integration not enabled)"
+            item["source"] = item["source_service"] or item["source_endpoint_id"]
+            item["dest"] = item["dest_service"] or item["dest_endpoint_id"]
 
-        layout = [["service_integration_id", "source_service", "dest_service",
+        layout = [["service_integration_id", "source", "dest",
                    "integration_type", "enabled", "active", "description"]]
         if self.args.verbose:
             layout.extend(["source_project", "dest_project"])
