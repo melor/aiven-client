@@ -2540,6 +2540,24 @@ server_encryption_options:
         if self.args.json:
             self.print_response(result, json=True)
 
+    @arg.json
+    @arg.project
+    @arg("--service", help="Related service name")
+    @arg("--severity", required=True, choices=["low", "high", "critical"], help="Ticket severity")
+    @arg("--title", required=True, help="Short description")
+    @arg("--description", required=True, help="Longer description")
+    def ticket_create(self):
+        """Create a support ticket"""
+        project_name = self.get_project()
+        ticket = self.client.create_ticket(
+            description=self.args.description,
+            project=project_name,
+            service=self.args.service,
+            severity=self.args.severity,
+            title=self.args.title,
+        )
+        print(ticket)
+
 
 if __name__ == "__main__":
     AivenCLI().main()

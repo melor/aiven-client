@@ -916,3 +916,14 @@ class AivenClient(AivenClientBase):
 
     def start_service_maintenance(self, project, service):
         return self.verify(self.put, self.build_path("project", project, "service", service, "maintenance", "start"))
+
+    def create_ticket(self, project, severity, title, description, service=None):
+        body = {
+            "severity": severity,
+            "title": title,
+            "description": description,
+        }
+        if service:
+            body["service_name"] = service
+
+        return self.verify(self.post, self.build_path("project", project, "tickets"), body=body)
